@@ -1,0 +1,140 @@
+03 - TROUBLESHOOTING LOG
+========================
+
+Problems hit while building the lab, how they were diagnosed, and what fixed
+them. Format for each entry: symptom, cause, resolution, lesson.
+
+
+ENTRY 1 - Setup would not install to the disk
+---------------------------------------------
+Symptom:    Windows Server Setup showed "There is an error selecting this
+            partition for install" and the Next button stayed unavailable.
+Cause:      The new virtual disk showed an existing partition layout that
+            Setup could not use.
+Resolution: Cleared the disk layout from Setup's command prompt (Shift+F10,
+            diskpart, select disk 0, clean) so Setup could create its own
+            partitions, then refreshed the list and continued.
+Lesson:     Confirm the disk number and size before running clean. Doing it
+            on a brand-new virtual disk is safe.
+
+
+ENTRY 2 - Server Manager was missing (Server Core installed)
+------------------------------------------------------------
+Symptom:    After install the server showed only a text menu (SConfig) and
+            no Server Manager.
+Cause:      The automatic VirtualBox install chose the first edition, which is
+            Server Core. The edition prompt never appeared.
+Resolution: Kept Server Core, which uses less RAM on a 16 GB host. Managed it
+            with PowerShell and, later, with RSAT tools from the IT
+            workstation.
+Lesson:     Check which edition an unattended install picked. Use "Skip
+            Unattended Installation" to choose the edition during setup.
+
+
+ENTRY 3 - Wrong operating system installed as the "server"
+-----------------------------------------------------------
+Symptom:    Looking for Server Manager on a VM that did not have it.
+Cause:      The VM had been built from a Windows 11 Enterprise evaluation
+            ISO. Windows 11 is a client operating system and does not include
+            the Windows Server roles or Server Manager.
+Resolution: Ran winver to identify the OS, deleted the VM, and built the
+            server from the Windows Server evaluation ISO.
+Lesson:     Identify the OS and edition first (winver, Settings > About)
+            before troubleshooting missing tools.
+
+
+ENTRY 4 - Windows 11 Home cannot join a domain
+----------------------------------------------
+Symptom:    The client VM was running Windows 11 Home.
+Cause:      Home editions cannot join an Active Directory domain. The
+            automatic install had selected Home.
+Resolution: Recreated the VM and selected Windows 11 Pro during setup.
+Lesson:     Check the edition (Settings > System > About) before planning
+            domain work.
+
+
+ENTRY 5 - "An attempt was made to add an object to the directory with a name
+           that is already in use"
+------------------------------------------------------------------------
+Symptom:    New-ADOrganizationalUnit failed when creating OUs named Users and
+            Computers at the domain root.
+Cause:      Active Directory already has built-in containers named Users and
+            Computers at the root, and sibling objects must have unique names.
+Resolution: Created a parent OU named Company and placed Users, Computers, and
+            Groups inside it. Pointed later commands at the new paths.
+Lesson:     The parent-OU structure is also more scalable: departments or
+            sites can be added under it later.
+
+
+ENTRY 6 - PowerShell command "not recognized"
+---------------------------------------------
+Symptom:    'set-netipinterface' is not recognized as an internal or external
+            command; a later AD command failed after a typo.
+Cause:      The command was typed into Command Prompt (cmd.exe), where it does
+            not exist, and a space was missing in a parameter
+            (-InterfaceMetric10 instead of -InterfaceMetric 10). A cmdlet name
+            also had an extra letter.
+Resolution: Opened PowerShell (prompt starting with "PS"), retyped the
+            commands carefully, and used Get-NetAdapter to confirm adapter
+            names.
+Lesson:     Check the prompt to see which shell you are in, and re-read
+            commands character by character.
+
+
+ENTRY 7 - Client could not find the domain (wrong DNS server)
+-------------------------------------------------------------
+Symptom:    nslookup corp.lab returned "Non-existent domain" from an unfamiliar
+            DNS server, although nslookup corp.lab 192.168.56.10 worked.
+            The client had a correct DHCP address.
+Cause:      The client has two adapters. The NAT adapter supplied a DNS server
+            from the home network, and Windows asked it first. That server
+            does not know corp.lab.
+Resolution: Set both adapters to use the domain controller (192.168.56.10) as
+            the only DNS server, flushed the cache, and tested with
+            Resolve-DnsName corp.lab. The domain controller forwards internet
+            lookups, so external names still resolve.
+Lesson:     Domain clients should use only the domain controller for DNS.
+            Testing a lookup against a named server (nslookup name server)
+            separates "server works" from "client uses the wrong server".
+
+
+ENTRY 8 - runas failed with "cannot find the file specified"
+------------------------------------------------------------
+Symptom:    runas /netonly ... "mmc.exe%SystemRoot%\system32\dsa.msc" failed.
+Cause:      A missing space between mmc.exe and %SystemRoot% turned the command
+            into one invalid file name.
+Resolution: Added the space and ran again to open AD Users and Computers with
+            domain admin credentials.
+Lesson:     The error message echoed the malformed path, which is where the
+            missing space showed up. Read the path in the error.
+
+
+ENTRY 9 - osTicket worked by IP address but not by name
+-------------------------------------------------------
+Symptom:    http://192.168.56.101/ loaded, but typing osticket.corp.lab in the
+            browser ran a web search instead.
+Cause:      Two separate things: (1) the browser treats a name with an unknown
+            suffix as a search term unless it is clearly a URL, and (2) the
+            osTicket server had received 192.168.56.101 from DHCP rather than
+            the address first assumed, so the DNS record had to match the
+            real address.
+Diagnosis:  sudo ss -tlnp showed Apache listening on all interfaces on port 80;
+            sudo ufw status showed the firewall inactive; ip -br addr showed
+            the real Host-Only address.
+Resolution: Used the full URL (http://osticket.corp.lab/), made sure the A
+            record matched the server's actual IP, and planned a DHCP
+            reservation to keep the address stable.
+Lesson:     Work down the stack: service listening, firewall, address, DNS
+            name, then the client application.
+
+
+ENTRY 10 - Making the site root open osTicket, and the Helpdesk URL
+-------------------------------------------------------------------
+Symptom:    The root address showed the default web page, and osTicket lived
+            in a subfolder.
+Cause:      Apache's DocumentRoot pointed at the default folder.
+Resolution: Pointed DocumentRoot at the osTicket folder, ran apache2ctl
+            configtest, reloaded Apache, and set osTicket's Helpdesk URL to
+            http://osticket.corp.lab/ so its links and redirects match.
+Lesson:     Back up the config first, validate with configtest before
+            reloading, and update the application's own URL setting to match.
