@@ -59,8 +59,9 @@ STATUS
 [ ] Account lockout policy and unlock workflow
 [ ] Shared folder and mapped drive via Group Policy
 [ ] Additional Group Policy objects (restrictions, password policy)
-[ ] Ubuntu server joined to the domain (realmd/SSSD)
+[X] Ubuntu server joined to the domain (realmd/SSSD)
 [ ] 10+ tickets worked end to end in osTicket (see 05-ticket-log.txt)
+[ ] Ubuntu server hosting NAS and Navidrome 
 
 
 DOCUMENTS
