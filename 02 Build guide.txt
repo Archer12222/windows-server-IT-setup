@@ -5,7 +5,7 @@ The order and commands used to build the lab. Passwords are never stored in
 this repository; choose your own when you see a prompt.
 
 Conventions: PowerShell commands are shown as-is. The domain is corp.lab, the
-server is DC01, and the lab network is 192.168.56.0/24.
+server is WindowsServer, and the lab network is 192.168.56.0/24.
 
 
 PHASE 0 - PREPARATION (VirtualBox)
@@ -27,7 +27,7 @@ PHASE 1 - SERVER BASE
 2. Sign in and use SConfig (menu option 15 exits to PowerShell).
 3. Rename the server and restart:
 
-     Rename-Computer -NewName DC01 -Restart
+     Rename-Computer -NewName WindowsServer -Restart
 
 4. Identify the Host-Only adapter (the one without a 10.0.2.x address):
 
@@ -75,7 +75,7 @@ PHASE 2 - DOMAIN, DNS, DHCP
 
 5. Configure and authorize DHCP:
 
-     Add-DhcpServerInDC -DnsName dc01.corp.lab -IPAddress 192.168.56.10
+     Add-DhcpServerInDC -DnsName WindowsServer.corp.lab -IPAddress 192.168.56.10
      Add-DhcpServerv4Scope -Name "LabScope" -StartRange 192.168.56.100 -EndRange 192.168.56.200 -SubnetMask 255.255.255.0 -State Active
      Set-DhcpServerv4OptionValue -DnsServer 192.168.56.10 -DnsDomain corp.lab
 
@@ -190,7 +190,7 @@ MariaDB. [Add your osTicket installation steps here.]
 
      Add-DhcpServerv4Reservation -ScopeId 192.168.56.0 -IPAddress 192.168.56.101 -ClientId "<MAC-address>" -Name "osticket"
 
-2. Add a DNS record on DC01:
+2. Add a DNS record on WindowsServer:
 
      Add-DnsServerResourceRecordA -Name osticket -ZoneName corp.lab -IPv4Address 192.168.56.101
 
