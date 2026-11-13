@@ -101,3 +101,52 @@ Notes:
 
 Verification: The user signs in with the temporary password and is prompted to
 set a new one.
+
+KB-005 - DHCP reservation does not apply to a Linux (Ubuntu) server
+-------------------------------------------------------------------
+Applies to:   Ubuntu Server with netplan/systemd-networkd, Windows DHCP server
+Symptoms:     A reservation exists with the correct MAC address, but the
+              server still receives a different address from the pool after a
+              reboot.
+Cause:        The Linux DHCP client sends a DUID as its client identifier, not
+              the MAC address, so the reservation does not match.
+ 
+Steps:
+1. On the server, confirm the interface and MAC:
+     ip -br link
+     ip -br addr
+2. On the DHCP server, confirm the reservation:
+     Get-DhcpServerv4Reservation -ScopeId <scope>
+3. Edit the netplan file (sudo nano /etc/netplan/<file>.yaml) and add under
+   the interface (spaces only, aligned with the other lines):
+       dhcp-identifier: mac
+4. Apply and renew:
+     sudo netplan apply
+     sudo networkctl reconfigure <interface>
+5. If the old lease is stale, clear it on the DHCP server:
+     Remove-DhcpServerv4Lease -IPAddress <old-address>
+ 
+Verification: ip -br addr shows the reserved address, and it is unchanged
+after a reboot.
+ 
+ 
+KB-006 - Browser shows a certificate warning for an internal site
+-----------------------------------------------------------------
+Applies to:   Internal web apps using a self-signed or internal CA certificate
+Symptoms:     "Your connection isn't private" / NET::ERR_CERT_AUTHORITY_INVALID
+Cause:        The computer does not trust the certificate that issued the
+              site's certificate.
+ 
+Steps:
+1. Confirm the address in the browser matches the name on the certificate
+   (osticket.corp.lab, not the IP address).
+2. Check whether the certificate is in the Trusted Root store:
+     Get-ChildItem Cert:\LocalMachine\Root | Where-Object Subject -like "*osticket*"
+3. For a domain computer, refresh policy and check again:
+     gpupdate /force
+   (The certificate is delivered by the Trust-osTicket-Cert GPO.)
+4. Make sure the computer is in an OU the GPO applies to.
+5. Fully close and reopen the browser. Firefox uses its own certificate
+   store.
+ 
+Verification: The site opens over HTTPS with the padlock and no warning.
