@@ -44,3 +44,14 @@ Scaling
   to a group.
 - New departments or sites can be added as child OUs under Company.
 - redircmp sends new computer accounts to the Computers OU automatically.
+
+TLS / CERTIFICATES
+------------------
+- osTicket is served over HTTPS (Apache, port 443) at https://osticket.corp.lab/
+  with a self-signed certificate that includes a subjectAltName for the host.
+- HTTP (port 80) redirects to HTTPS.
+- The certificate is deployed to every domain computer's Trusted Root store
+  with a Group Policy object (Trust-osTicket-Cert, linked to the Company OU),
+  so browsers trust the site without warnings.
+- Only the public certificate is distributed. The private key stays on the
+  osTicket server.
