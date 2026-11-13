@@ -16,7 +16,7 @@ Every VM has two adapters:
   Adapter 1: NAT          Internet access for updates and downloads
   Adapter 2: Host-Only    The isolated lab network, 192.168.56.0/24
 
-CTIVE DIRECTORY DESIGN
+ACTIVE DIRECTORY DESIGN
 -----------------------
 Domain: corp.lab (NetBIOS name CORP)
  
