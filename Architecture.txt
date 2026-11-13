@@ -1,0 +1,46 @@
+Using Oracle VirtualBox
+there is a windows server VM named WindowsServer running windows server core 2025 that runs the domain, AD DS, DNS, DHCP.
+The domain is called corp.lab
+
+Then there is a ubunto server VM named osTicket running osticket and in future commits hosting a Nas and a Navidrome music service. Domain-joined 
+
+osticket.corp.lab is an a record in the corp.lab zone pointing to the osTicket server.
+
+Lastly there are 2 windows pro computer VM's
+Computer 1              Windows 11 Pro                    Domain-joined. RSAT installed. Used by the IT tech account.
+
+Staff01 Windows 11 Pro                    Domain-joined. Used by the staff user.
+
+Every VM has two adapters:
+ 
+  Adapter 1: NAT          Internet access for updates and downloads
+  Adapter 2: Host-Only    The isolated lab network, 192.168.56.0/24
+
+CTIVE DIRECTORY DESIGN
+-----------------------
+Domain: corp.lab (NetBIOS name CORP)
+ 
+  corp.lab
+  +-- Company (OU)
+      +-- Users (OU)       sstaff, ittech
+      +-- Computers (OU)   domain-joined workstations land here
+      +-- Groups (OU)      Staff, IT-Helpdesk
+ 
+Accounts
+- Staff user (sstaff), member of the Staff group.
+- IT tech (ittech), member of the IT-Helpdesk group. This is a standard
+  account, not a domain admin.
+- The built-in Administrator account is used only for server administration.
+ 
+Delegation (least privilege)
+- IT-Helpdesk is delegated "Reset user passwords and force password change
+  at next logon" on the Users OU, so the tech can handle password tickets
+  without being a domain admin. The tech was verified to have the delegated
+  access.
+ 
+Scaling
+- Permissions, policies, and delegation are applied to groups, not to
+  individual users. Adding a person means creating an account and adding it
+  to a group.
+- New departments or sites can be added as child OUs under Company.
+- redircmp sends new computer accounts to the Computers OU automatically.
