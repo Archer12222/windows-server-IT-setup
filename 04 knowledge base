@@ -1,0 +1,103 @@
+04 - KNOWLEDGE BASE
+===================
+
+Short how-to articles written from problems solved in this lab. Format:
+applies to, symptoms, cause, steps, verification.
+
+
+KB-001 - Computer cannot join the domain ("domain controller could not be
+          contacted")
+-------------------------------------------------------------------------
+Applies to:   Windows 10/11 Pro or Enterprise, Active Directory domain
+Symptoms:     Joining the domain fails with an error that a domain controller
+              could not be contacted, or the domain was not found.
+Cause:        Almost always DNS. The computer is not using the domain
+              controller as its DNS server, or it is asking another server
+              first.
+
+Steps:
+1. Open PowerShell and check which DNS servers the computer uses:
+     Get-DnsClientServerAddress -AddressFamily IPv4
+2. Confirm the domain controller's address is the (only) DNS server on every
+   active adapter. To set it:
+     Set-DnsClientServerAddress -InterfaceAlias "<adapter>" -ServerAddresses <DC-IP>
+3. Clear the cache and test name resolution:
+     ipconfig /flushdns
+     Resolve-DnsName <domain-name>
+4. Test that the computer can reach the domain controller:
+     Test-NetConnection <DC-IP> -Port 53
+   (Ping may be blocked by the firewall even when the network is fine.)
+5. Retry the join.
+
+Verification: Resolve-DnsName returns the domain controller's IP, and the join
+completes with the "Welcome to the domain" message.
+
+
+KB-002 - Windows 11 Home cannot join a domain
+---------------------------------------------
+Applies to:   Windows 11 Home
+Symptoms:     The "Domain or workgroup" option is missing or the join fails
+              immediately.
+Cause:        Home editions do not support joining Active Directory.
+
+Steps:
+1. Check the edition: Settings > System > About > Edition.
+2. If it says Home, the computer needs Windows 11 Pro (or Enterprise). Options
+   are an edition upgrade with a valid license, or a clean install of Pro.
+3. After the edition change, join the domain normally.
+
+Verification: Edition shows Windows 11 Pro; "Domain or workgroup" > Change is
+available and the join succeeds.
+
+
+KB-003 - A website opens by IP address but not by name
+------------------------------------------------------
+Applies to:   Internal web applications (for example osTicket)
+Symptoms:     http://<IP>/ works. Typing the hostname performs a web search or
+              shows a "can't be reached" page.
+
+Steps:
+1. Type the full URL including http:// and the trailing slash, for example
+   http://osticket.corp.lab/. Browsers treat unfamiliar names as search terms.
+2. If it still fails, test DNS from the client:
+     Resolve-DnsName <hostname>
+   The answer must match the server's real IP.
+3. If the address is wrong, correct the A record on the DNS server:
+     Remove-DnsServerResourceRecord -ZoneName <zone> -Name <host> -RRType A -Force
+     Add-DnsServerResourceRecordA -Name <host> -ZoneName <zone> -IPv4Address <IP>
+   Then run ipconfig /flushdns on the client.
+4. Test the port:
+     Test-NetConnection <hostname> -Port 80
+5. If the port test fails, check on the server that the web service is
+   listening (sudo ss -tlnp) and that a firewall is not blocking it.
+6. If the browser's "Secure DNS" setting is on, turn it off for internal names.
+
+Verification: The hostname resolves to the server's IP and the page loads.
+
+
+KB-004 - Resetting a staff member's password (IT-Helpdesk)
+----------------------------------------------------------
+Applies to:   IT technicians in the IT-Helpdesk group with delegated rights
+Use when:     A user is locked out or has forgotten their password.
+
+Steps:
+1. Verify the user's identity using your organization's procedure before
+   changing anything.
+2. On the IT workstation, open Active Directory Users and Computers
+   (dsa.msc) while signed in with your own IT account.
+3. Browse to Company > Users and find the account.
+4. Right-click the user > Reset Password.
+5. Enter a temporary password that meets the complexity rules and check
+   "User must change password at next logon".
+6. If the account is locked, open its Properties > Account and check "Unlock
+   account" (requires the unlock permission to be delegated).
+7. Give the user the temporary password through an approved channel and
+   record the action in the ticket.
+
+Notes:
+- The technician account should only have rights on the Users OU. Attempts to
+  reset accounts outside it are denied, which is expected.
+- Never reuse or store temporary passwords in the ticket text.
+
+Verification: The user signs in with the temporary password and is prompted to
+set a new one.
