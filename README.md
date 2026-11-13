@@ -63,18 +63,6 @@ STATUS
 [ ] 10+ tickets worked end to end in osTicket (see 05-ticket-log.txt)
 [ ] Ubuntu server hosting NAS and Navidrome 
 
-
-DOCUMENTS
----------
-01-architecture.txt        Hardware, VMs, network design, design decisions
-02-build-guide.txt         Step-by-step build with the commands used
-03-troubleshooting-log.txt Real problems hit during the build and the fixes
-04-knowledge-base.txt      Knowledge base articles written from those fixes
-05-ticket-log.txt          Ticket log template and planned support scenarios
-
-
-NOTES
------
 - Windows Server and Windows 11 Enterprise/Pro guests use Microsoft
   evaluation media where applicable. Evaluation periods expire and the VMs
   need to be rebuilt or re-licensed.
