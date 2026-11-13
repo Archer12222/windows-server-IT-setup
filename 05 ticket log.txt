@@ -1,0 +1,51 @@
+05 - TICKET LOG
+===============
+
+This file tracks support tickets worked in osTicket. Only tickets that have
+actually been worked and resolved in the lab should be added here.
+
+Staff users submit tickets from the staff workstation. The IT technician works
+them from the IT workstation using the osTicket agent panel and the tools in
+the lab (AD Users and Computers, PowerShell, remote tools).
+
+
+TICKET TEMPLATE
+---------------
+Ticket #:
+Date opened / closed:
+Reported by:
+Category:                (Account, Network, Access, Software, Hardware, Other)
+Priority:                (Low / Medium / High)
+Symptom (as reported):
+
+Troubleshooting steps taken:
+  1.
+  2.
+  3.
+
+Root cause:
+Resolution:
+Time to resolve:
+Knowledge base article (if any):
+What I would do differently / lesson learned:
+
+
+PLANNED SCENARIOS (NOT YET COMPLETED)
+-------------------------------------
+Check each one off and add a completed ticket entry below once it is worked in
+osTicket.
+
+[ ] Forgotten password: verify the user, reset it in AD Users and Computers
+[ ] Locked-out account (needs the lockout policy): unlock the account
+[ ] User cannot reach a shared folder: check group membership and permissions
+[ ] Mapped drive missing: check Group Policy and run gpupdate /force
+[ ] No network / wrong DNS: diagnose with ipconfig /all, Resolve-DnsName
+[ ] Software install request: install an approved application
+[ ] Slow computer: Task Manager, startup apps, disk space, Windows Update
+[ ] Remote support session using Remote Desktop and Quick Assist
+[ ] Corrupted system files: sfc /scannow and DISM
+
+
+COMPLETED TICKETS
+-----------------
+(Copy the template above for each ticket worked.)
