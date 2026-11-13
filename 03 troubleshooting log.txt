@@ -138,3 +138,82 @@ Resolution: Pointed DocumentRoot at the osTicket folder, ran apache2ctl
             http://osticket.corp.lab/ so its links and redirects match.
 Lesson:     Back up the config first, validate with configtest before
             reloading, and update the application's own URL setting to match.
+
+ENTRY 10 - Making the site root open osTicket, and the Helpdesk URL
+-------------------------------------------------------------------
+Symptom:    The root address showed the default web page, and osTicket lived
+            in a subfolder.
+Cause:      Apache's DocumentRoot pointed at the default folder.
+Resolution: Pointed DocumentRoot at the osTicket folder, ran apache2ctl
+            configtest, reloaded Apache, and set osTicket's Helpdesk URL to
+            http://osticket.corp.lab/ so its links and redirects match.
+Lesson:     Back up the config first, validate with configtest before
+            reloading, and update the application's own URL setting to match.
+ 
+ 
+ENTRY 11 - DHCP reservation failed: "ResourceExists" (error 20022)
+-----------------------------------------------------------------
+Symptom:    Add-DhcpServerv4Reservation failed with DHCP 20022 for an address
+            the osTicket server was already using.
+Cause:      An active lease already existed for that address, and a
+            reservation cannot be created on top of it. A follow-up attempt
+            to remove the lease also failed (DHCP 20019) once the reservation
+            existed, because a reserved lease cannot be deleted that way.
+Resolution: Checked Get-DhcpServerv4Reservation, which showed the reservation
+            was already present for the correct MAC. Remove-DhcpServerv4Lease
+            takes -IPAddress on its own (adding -ScopeId gives an
+            "ambiguous parameter set" error).
+Lesson:     Check the current state (list reservations and leases) before
+            retrying a command that failed.
+ 
+ 
+ENTRY 12 - Reservation did not hold after reboot (address changed)
+------------------------------------------------------------------
+Symptom:    After a reboot the osTicket server came back on a different
+            address even though the reservation was correct (MAC matched the
+            Host-Only interface). The DNS record then pointed at the old
+            address.
+Cause:      Ubuntu Server identifies itself to DHCP with a DUID by default,
+            not the MAC address, so the DHCP server never matched the
+            reservation.
+Resolution: Added "dhcp-identifier: mac" under the Host-Only interface in the
+            netplan file, applied it, removed the stale lease on the DC, and
+            renewed. The server returned to the reserved address and the
+            existing DNS record was correct again.
+Lesson:     Verify the identity the client actually sends. Test one layer at
+            a time: MAC, reservation, client identifier, lease, DNS.
+ 
+ 
+ENTRY 13 - SSH "Connection refused", then sshd would not start
+--------------------------------------------------------------
+Symptom:    scp to the Ubuntu server failed with "port 22: Connection
+            refused". After installing openssh-server the service failed to
+            start.
+Cause:      No SSH server was installed at first. Once installed, the log
+            (journalctl -xeu ssh) showed "sshd: no hostkeys available --
+            exiting": the server's host keys did not exist.
+Resolution: sudo ssh-keygen -A, then restarted the ssh service.
+Lesson:     Read the service log line instead of guessing.
+ 
+ 
+ENTRY 14 - scp: "open local ... Permission denied"
+--------------------------------------------------
+Symptom:    The connection and login worked, but scp could not save the file
+            to C:\.
+Cause:      A regular user cannot write to the root of the C: drive.
+Resolution: Saved the file to the user's home folder ($HOME\osticket.crt).
+Lesson:     The error named a LOCAL path, which pointed at the destination
+            rather than the network.
+ 
+ 
+ENTRY 15 - Apache configtest: SSLCertificateFile does not exist
+---------------------------------------------------------------
+Symptom:    apache2ctl configtest reported "Syntax error ... file
+            '/etc/ssl/certs/osticket.crt' does not exist or is empty".
+Cause:      The openssl command was pasted with line-continuation backslashes
+            that broke, and the certificate was then written to
+            /etc/ssl/private instead of /etc/ssl/certs.
+Resolution: Ran the command on one line and moved the certificate to
+            /etc/ssl/certs. configtest then returned Syntax OK.
+Lesson:     A "syntax error" from Apache can be a missing file. Read the full
+            message.
